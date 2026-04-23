@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>福州市地理要素专题展示</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.15/"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        .header {
+            height: 60px;
+            background-color: #1976d2;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100% - 60px);
+        }
+
+        #viewDiv {
+            flex: 4;
+            height: 100%;
+        }
+
+        .basemap-gallery {
+            flex: 1;
+            height: 100%;
+            background-color: #f5f7fa;
+            border-left: 1px solid #e4e7ed;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .basemap-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #dcdfe6;
+            transition: all 0.2s ease;
+        }
+
+        .basemap-item:hover {
+            background-color: #ecf5ff;
+            border-color: #409eff;
+        }
+
+        .basemap-item.active {
+            background-color: #409eff;
+            color: white;
+            border-color: #409eff;
+        }
+
+        h3 {
+            color: #303133;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">福州市地理要素专题展示</div>
+
+    <div class="main-container">
+        <div id="viewDiv"></div>
+
+        <div class="basemap-gallery">
+            <h3>底图切换</h3>
+            <div class="basemap-item" data-basemap="streets-vector">街道地图</div>
+            <div class="basemap-item" data-basemap="topo-vector">地形图</div>
+            <div class="basemap-item" data-basemap="gray-vector">浅灰色底图</div>
+            <div class="basemap-item active" data-basemap="dark-gray-vector">深灰色底图</div>
+            <div class="basemap-item" data-basemap="satellite">卫星影像</div>
+        </div>
+    </div>
+
+    <script>
+require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/widgets/ScaleBar",
+    "esri/widgets/Legend",
+    "esri/widgets/Search",
+    "esri/widgets/LayerList"
+], function(Map, MapView, FeatureLayer, ScaleBar, Legend, Search, LayerList) {
+
+    const MY_FEATURE_LAYER_URL = "https://www.geosceneonline.cn/server/rest/services/Hosted/福州市高校POI数据/FeatureServer";
+
+    const map = new Map({
+        basemap: "dark-gray-vector"
+    });
+
+    // FeatureLayer 增加弹窗模板，只显示 name 和 adname
+    const myLayer = new FeatureLayer({
+        url: MY_FEATURE_LAYER_URL,
+        title: "福州市专题数据",
+        outFields: ["*"],
+        popupTemplate: {
+            title: "{name}",
+            content: `
+                <b>行政区:</b> {adname}
+            `
+        }
+    });
+    map.add(myLayer);
+
+    const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [119.3, 26.08],
+        zoom: 12,
+        popup: { defaultPopupEnabled: true }
+    });
+
+    view.when(function() {
+        const scaleBar = new ScaleBar({ view: view, unit: "metric" });
+        view.ui.add(scaleBar, "bottom-left");
+
+        const legend = new Legend({
+            view: view,
+            layerInfos: [{ layer: myLayer, title: "专题图层图例" }]
+        });
+        view.ui.add(legend, "top-right");
+
+        const searchWidget = new Search({ view: view, locationEnabled: true });
+        view.ui.add(searchWidget, "top-left");
+
+        const layerList = new LayerList({ view: view });
+        view.ui.add(layerList, "bottom-right");
+    });
+
+    // 底图库切换
+    document.querySelectorAll(".basemap-item").forEach(item => {
+        item.addEventListener("click", function() {
+            document.querySelectorAll(".basemap-item").forEach(el => el.classList.remove("active"));
+            this.classList.add("active");
+            const basemapId = this.getAttribute("data-basemap");
+            map.basemap = basemapId;
+        });
+    });
+});
+    </script>
+</body>
+</html>
