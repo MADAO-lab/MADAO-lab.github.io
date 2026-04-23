@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>福州市地理要素专题展示</title>
+    <!-- 作业要求的 ArcGIS API 4.15 版本 -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.15/"></script>
+    <style>
+        /* ========== 作业要求的三个区域布局 ========== */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* 1. 页眉区域（优化配色） */
+        .header {
+            height: 60px;
+            background-color: #1f4e79; /* 更专业的深蓝色 */
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 主体容器：地图 + 底图库 */
+        .main-container {
+            display: flex;
+            height: calc(100% - 60px);
+        }
+
+        /* 2. 地图区域（优化层级，避免控件被遮挡） */
+        #viewDiv {
+            flex: 4;
+            height: 100%;
+        }
+
+        /* 3. 底图库侧边栏区域（优化配色与交互） */
+        .basemap-gallery {
+            flex: 1;
+            height: 100%;
+            background-color: #f8f9fa;
+            border-left: 1px solid #e9ecef;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .basemap-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+
+        .basemap-item:hover {
+            background-color: #e3f2fd;
+            border-color: #1976d2;
+        }
+
+        .basemap-item.active {
+            background-color: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+
+        h3 {
+            color: #1f4e79;
+        }
+    </style>
+</head>
+<body>
+    <!-- 1. 页眉区域 -->
+    <div class="header">福州市地理要素专题展示</div>
+
+    <div class="main-container">
+        <!-- 2. 地图区域 -->
+        <div id="viewDiv"></div>
+
+        <!-- 3. 底图库区域 -->
+        <div class="basemap-gallery">
+            <h3 style="margin-top: 0;">底图切换</h3>
+            <div class="basemap-item active" data-basemap="streets-vector">街道地图</div>
+            <div class="basemap-item" data-basemap="topo-vector">地形图</div>
+            <div class="basemap-item" data-basemap="light-gray-vector">浅灰色底图</div>
+            <div class="basemap-item" data-basemap="dark-gray-vector">深灰色底图</div>
+            <div class="basemap-item" data-basemap="satellite">卫星影像</div>
+        </div>
+    </div>
+
+    <script>
+require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/widgets/ScaleBar",
+    "esri/widgets/Legend",
+    "esri/widgets/Search",
+    "esri/widgets/LayerList",
+    "esri/Graphic"
+], function(Map, MapView, FeatureLayer, ScaleBar, Legend, Search, LayerList, Graphic) {
+
+    // =====================
+    // 👉 填入你的 GeoScene 专题图层 URL
+    // =====================
+    const MY_FEATURE_LAYER_URL = "";
+
+    // 初始化地图（默认底图：街道地图，加载更快）
+    const map = new Map({
+        basemap: "streets-vector"
+    });
+
+    // 加载你的专题图层（开启点击交互）
+    const myLayer = new FeatureLayer({
+        url: MY_FEATURE_LAYER_URL,
+        title: "福州市专题数据",
+        outFields: ["*"],
+        popupTemplate: {
+            title: "{name}", // 替换为你的点要素字段名
+            content: [
+                {
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "name", label: "名称" },
+                        { fieldName: "address", label: "地址" }
+                    ]
+                }
+            ]
+        }
+    });
+    map.add(myLayer);
+
+    // 初始化地图视图，定位福州（优化交互性能）
+    const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [119.3, 26.08],
+        zoom: 12,
+        popup: {
+            dockEnabled: true,
+            dockOptions: {
+                buttonEnabled: true,
+                position: "bottom-right"
+            }
+        }
+    });
+
+    // 视图加载完成后，添加所有作业要求的控件
+    view.when(function() {
+        // 1. 比例尺
+        const scaleBar = new ScaleBar({
+            view: view,
+            unit: "metric"
+        });
+        view.ui.add(scaleBar, "bottom-left");
+
+        // 2. 图例
+        const legend = new Legend({
+            view: view,
+            layerInfos: [{ layer: myLayer, title: "专题图层图例" }]
+        });
+        view.ui.add(legend, "top-right");
+
+        // 3. 搜索框
+        const searchWidget = new Search({
+            view: view,
+            locationEnabled: true
+        });
+        view.ui.add(searchWidget, "top-left");
+
+        // 4. 图层列表（图层控制）
+        const layerList = new LayerList({
+            view: view
+        });
+        view.ui.add(layerList, "bottom-right");
+    });
+
+    // 底图库切换功能（点击侧边栏切换底图）
+    document.querySelectorAll(".basemap-item").forEach(item => {
+        item.addEventListener("click", function() {
+            // 移除所有 active 状态
+            document.querySelectorAll(".basemap-item").forEach(el => el.classList.remove("active"));
+            // 当前项设为 active
+            this.classList.add("active");
+            // 切换地图底图
+            const basemapId = this.getAttribute("data-basemap");
+            map.basemap = basemapId;
+        });
+    });
+});
+    </script>
+</body>
+</html>
