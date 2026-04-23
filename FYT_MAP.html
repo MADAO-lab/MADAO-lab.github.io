@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>福州市地图作业</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.32/"></script>
+    <style>
+        html,body,#viewDiv { height:100%; width:100%; margin:0; padding:0; }
+    </style>
+</head>
+<body>
+    <div id="viewDiv"></div>
+    <script>
+require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/layers/TileLayer"
+], function(Map, MapView, FeatureLayer, TileLayer) {
+
+    // ==========================================
+    // 👉 你的要素图层URL
+    // ==========================================
+    const MY_LAYER_URL = "https://www.geosceneonline.cn/server/rest/services/Hosted/福州市高校POI数据/FeatureServer";
+
+    // ----------------------
+    // 国内可加载底图（GeoScene官方）
+    // ----------------------
+    const geoSceneBasemap = new TileLayer({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer"
+    });
+
+    const map = new Map({
+        basemap: {
+            baseLayers: [geoSceneBasemap]
+        }
+    });
+
+    // ----------------------
+    // 加载你的图层（强制加载所有几何：点+线+面）
+    // ----------------------
+    const myLayer = new FeatureLayer({
+        url: MY_LAYER_URL,
+        title: "福州数据",
+        outFields: ["*"],  // 显示全部字段
+        visible: true     // 强制显示
+    });
+    map.add(myLayer);
+
+    // 视图
+    const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [119.3, 26.08],
+        zoom: 12
+    });
+
+    // 控件
+    view.when(() => {
+        require([
+            "esri/widgets/ScaleBar",
+            "esri/widgets/Legend",
+            "esri/widgets/LayerList"
+        ], (ScaleBar, Legend, LayerList) => {
+            view.ui.add(new ScaleBar({ view }), "bottom-left");
+            view.ui.add(new Legend({ view }), "top-right");
+            view.ui.add(new LayerList({ view }), "bottom-right");
+        });
+    });
+});
+    </script>
+</body>
+</html>
