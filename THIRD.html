@@ -15,10 +15,10 @@
             font-family: "Microsoft YaHei", sans-serif;
         }
 
-        /* 1. 页眉区域（优化配色） */
+        /* 1. 页眉区域（优化配色，不刺眼） */
         .header {
             height: 60px;
-            background-color: #1f4e79; /* 更专业的深蓝色 */
+            background-color: #1976d2;
             color: white;
             display: flex;
             align-items: center;
@@ -34,18 +34,18 @@
             height: calc(100% - 60px);
         }
 
-        /* 2. 地图区域（优化层级，避免控件被遮挡） */
+        /* 2. 地图区域 */
         #viewDiv {
             flex: 4;
             height: 100%;
         }
 
-        /* 3. 底图库侧边栏区域（优化配色与交互） */
+        /* 3. 底图库侧边栏区域（优化配色） */
         .basemap-gallery {
             flex: 1;
             height: 100%;
-            background-color: #f8f9fa;
-            border-left: 1px solid #e9ecef;
+            background-color: #f5f7fa;
+            border-left: 1px solid #e4e7ed;
             padding: 15px;
             box-sizing: border-box;
             overflow-y: auto;
@@ -57,23 +57,24 @@
             background-color: white;
             border-radius: 4px;
             cursor: pointer;
-            border: 1px solid #dee2e6;
+            border: 1px solid #dcdfe6;
             transition: all 0.2s ease;
         }
 
         .basemap-item:hover {
-            background-color: #e3f2fd;
-            border-color: #1976d2;
+            background-color: #ecf5ff;
+            border-color: #409eff;
         }
 
         .basemap-item.active {
-            background-color: #1976d2;
+            background-color: #409eff;
             color: white;
-            border-color: #1976d2;
+            border-color: #409eff;
         }
 
         h3 {
-            color: #1f4e79;
+            color: #303133;
+            margin-top: 0;
         }
     </style>
 </head>
@@ -87,11 +88,11 @@
 
         <!-- 3. 底图库区域 -->
         <div class="basemap-gallery">
-            <h3 style="margin-top: 0;">底图切换</h3>
-            <div class="basemap-item active" data-basemap="streets-vector">街道地图</div>
+            <h3>底图切换</h3>
+            <div class="basemap-item" data-basemap="streets-vector">街道地图</div>
             <div class="basemap-item" data-basemap="topo-vector">地形图</div>
             <div class="basemap-item" data-basemap="light-gray-vector">浅灰色底图</div>
-            <div class="basemap-item" data-basemap="dark-gray-vector">深灰色底图</div>
+            <div class="basemap-item active" data-basemap="dark-gray-vector">深灰色底图</div>
             <div class="basemap-item" data-basemap="satellite">卫星影像</div>
         </div>
     </div>
@@ -104,52 +105,36 @@ require([
     "esri/widgets/ScaleBar",
     "esri/widgets/Legend",
     "esri/widgets/Search",
-    "esri/widgets/LayerList",
-    "esri/Graphic"
-], function(Map, MapView, FeatureLayer, ScaleBar, Legend, Search, LayerList, Graphic) {
+    "esri/widgets/LayerList"
+], function(Map, MapView, FeatureLayer, ScaleBar, Legend, Search, LayerList) {
 
     // =====================
-    // 👉 填入你的 GeoScene 专题图层 URL
+    // 👉 你的 GeoScene 专题图层 URL（保持原样，不做任何修改）
     // =====================
-    const MY_FEATURE_LAYER_URL = "";
+    const MY_FEATURE_LAYER_URL = "https://www.geosceneonline.cn/server/rest/services/Hosted/福州市高校POI数据/FeatureServer";
 
-    // 初始化地图（默认底图：街道地图，加载更快）
+    // 初始化地图（默认底图：深灰色，加载快、交互流畅）
     const map = new Map({
-        basemap: "streets-vector"
+        basemap: "dark-gray-vector"
     });
 
-    // 加载你的专题图层（开启点击交互）
+    // 加载你的专题图层（和你之前的写法完全一致，不额外添加配置）
     const myLayer = new FeatureLayer({
         url: MY_FEATURE_LAYER_URL,
         title: "福州市专题数据",
-        outFields: ["*"],
-        popupTemplate: {
-            title: "{name}", // 替换为你的点要素字段名
-            content: [
-                {
-                    type: "fields",
-                    fieldInfos: [
-                        { fieldName: "name", label: "名称" },
-                        { fieldName: "address", label: "地址" }
-                    ]
-                }
-            ]
-        }
+        outFields: ["*"]
     });
     map.add(myLayer);
 
-    // 初始化地图视图，定位福州（优化交互性能）
+    // 初始化地图视图（优化交互性能）
     const view = new MapView({
         container: "viewDiv",
         map: map,
         center: [119.3, 26.08],
         zoom: 12,
         popup: {
-            dockEnabled: true,
-            dockOptions: {
-                buttonEnabled: true,
-                position: "bottom-right"
-            }
+            // 开启默认点击弹窗，不指定字段，自动适配你的数据
+            defaultPopupEnabled: true
         }
     });
 
