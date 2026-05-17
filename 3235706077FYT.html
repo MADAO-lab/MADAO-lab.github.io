@@ -472,6 +472,7 @@ for (var l = 0; l < modeButtons.length; l++) {
       panelTagline.textContent = '一个年轻摄影师 · 一段跨越六十年的追寻';
     }
     renderChapters();
+    currentChapter = -1;
     goToChapter(0);
   });
 }
@@ -486,6 +487,7 @@ for (var c = 0; c < characterButtons.length; c++) {
     characterButtons[1].classList.toggle('active', character === 'yuanzhou');
     setVintageMode(character === 'yuanzhou');
     renderChapters();
+    currentChapter = -1;
     goToChapter(0);
   });
 }
