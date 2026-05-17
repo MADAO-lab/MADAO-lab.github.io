@@ -453,6 +453,8 @@ for (var l = 0; l < modeButtons.length; l++) {
     var mode = this.dataset.mode;
     if (mode === currentMode) return;
     currentMode = mode;
+    if (storyTimer) clearTimeout(storyTimer);
+    document.getElementById('caption-bar').classList.remove('visible');
 
     var allBtns = document.querySelectorAll('#layer-switcher button');
     for (var b = 0; b < allBtns.length; b++) allBtns[b].classList.remove('active');
