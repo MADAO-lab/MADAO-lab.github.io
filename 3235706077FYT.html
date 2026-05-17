@@ -49,15 +49,23 @@ body {
 .chapter-block.active .ch-num { opacity:0.55; }
 .chapter-block .ch-title { font-size:18px;font-weight:700;letter-spacing:2px;margin-bottom:2px;color:var(--text); }
 .chapter-block .ch-location { font-size:12px;color:var(--accent);letter-spacing:3px;margin-bottom:14px; }
-.chapter-block .ch-text { font-size:14px;line-height:2;color:var(--text-dim);letter-spacing:0.4px; }
+.chapter-block .ch-text { font-size:14px;line-height:2;color:var(--text-dim);letter-spacing:0.4px;text-align:justify; }
 .chapter-block .ch-highlight { color:var(--accent-bright); }
 .scene-card { margin-top:14px;border-radius:8px;overflow:hidden;position:relative;aspect-ratio:16/10;border:1px solid rgba(255,255,255,0.08); }
 .scene-card img { width:100%;height:100%;object-fit:cover;display:block;transition:opacity 0.3s; }
 .scene-card .scene-label { position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(transparent,rgba(0,0,0,0.75));font-size:11px;color:#ddd;letter-spacing:1px;z-index:1; }
 .vintage-chapter .ch-text,.vintage-chapter .ch-text p { font-style:italic;color:#c4956a !important; }
 .vintage-chapter .ch-text .ch-highlight { color:#e8c080 !important; }
+.grandpa-section { border-left: 2px solid var(--accent); padding-left: 12px; margin-top: 12px; }
 .vintage-note-head { color:#b8956a !important;letter-spacing:1px;font-style:normal; }
+#character-buttons { flex-direction: column; gap: 2px; margin-top: 2px; align-items: center; }
+#character-buttons button { display: block; width:100%; background: transparent; border: none; color: var(--text-dim); padding: 10px 14px; font-size: 12px; letter-spacing: 1px; cursor: pointer; border-radius: 6px; text-align: center; font-family: inherit; transition: all 0.2s; white-space: nowrap; }
+#character-buttons button:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+#character-buttons button.active { color: var(--accent); background: rgba(212,168,83,0.1); }
 .vintage-photo img { filter:sepia(0.8) brightness(0.75) contrast(1.1); }
+.ch5-vintage-text { display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-align:center;font-size:16px;color:var(--accent-bright);letter-spacing:2px;line-height:2;padding:20px; }
+.story-caption { margin-top: 8px; padding: 10px 14px; border-left: 2px solid var(--accent); font-size: 13px; color: var(--accent-bright); letter-spacing: 1px; line-height: 1.7; }
+.story-caption-only { margin-top: 14px; padding: 18px 16px; border: 1px solid rgba(212,168,83,0.2); border-radius: 8px; text-align: center; font-size: 14px; color: var(--accent-bright); letter-spacing: 2px; line-height: 1.8; }
 #panel-nav { padding:16px 28px 24px;border-top:1px solid var(--divider);display:flex;justify-content:space-between;align-items:center;flex-shrink:0; }
 .nav-btn { background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--text);padding:10px 20px;font-size:13px;letter-spacing:2px;cursor:pointer;border-radius:4px;transition:all 0.3s;font-family:inherit; }
 .nav-btn:hover { border-color:var(--accent);color:var(--accent); }
@@ -75,12 +83,10 @@ body {
 #layer-switcher button { display:flex;align-items:center;gap:8px;background:transparent;border:none;color:var(--text-dim);padding:10px 14px;font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:6px;text-align:left;font-family:inherit;transition:all 0.2s;white-space:nowrap; }
 #layer-switcher button:hover { color:var(--text);background:rgba(255,255,255,0.04); }
 #layer-switcher button.active { color:var(--accent);background:rgba(212,168,83,0.1); }
-#autoplay-btn { width:38px;height:38px;background:var(--panel-bg-trans);border:1px solid rgba(255,255,255,0.12);border-radius:8px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.3s;backdrop-filter:blur(10px);align-self:flex-end; }
-#autoplay-btn:hover { border-color:var(--accent); }
-#autoplay-btn.playing { color:var(--accent);border-color:var(--accent);animation:btnPulse 2s infinite; }
-@keyframes btnPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(212,168,83,0.3); } 50%{ box-shadow:0 0 0 8px rgba(212,168,83,0); } }
 #location-toast { position:absolute;top:90px;left:50%;transform:translateX(-50%);background:var(--panel-bg-trans);color:var(--accent);padding:8px 22px;border-radius:20px;font-size:14px;letter-spacing:2px;pointer-events:none;z-index:550;backdrop-filter:blur(10px);border:1px solid rgba(212,168,83,0.25);opacity:0;transition:opacity 0.4s;white-space:nowrap; }
 #location-toast.visible { opacity:1; }
+#caption-bar { position:absolute;bottom:40px;left:50%;transform:translateX(-50%);max-width:560px;width:85%;background:rgba(26,16,8,0.9);backdrop-filter:blur(10px);border:1px solid rgba(212,168,83,0.25);border-radius:8px;padding:14px 20px;z-index:550;pointer-events:none;opacity:0;transition:opacity 0.5s;text-align:center;font-size:14px;color:var(--accent-bright);letter-spacing:1px;line-height:1.8; }
+#caption-bar.visible { opacity:1; }
 @media (max-width:768px) {
   body { flex-direction:column; }
   #story-panel { width:100%;min-width:100%;max-width:100%;height:44vh;order:2; }
@@ -119,12 +125,16 @@ body {
   <div id="map"></div>
   <button id="toggle-panel" title="隐藏/显示故事面板">◀</button>
   <div id="location-toast"></div>
+  <div id="caption-bar"></div>
   <div id="map-controls">
     <div id="layer-switcher">
-      <button data-layer="modern" class="active"><span>🗺</span> 现代视角</button>
-      <button data-layer="vintage"><span>📷</span> 怀旧光影</button>
+      <button data-mode="story" class="active"><span>📖</span> 故事模式</button>
+      <button data-mode="character"><span>👤</span> 人物模式</button>
+      <div id="character-buttons" style="display:none;">
+        <button data-character="xiaoyue">林小月</button>
+        <button data-character="yuanzhou">林远舟</button>
+      </div>
     </div>
-    <button id="autoplay-btn" title="自动播放">▶</button>
   </div>
 </div>
 
@@ -143,6 +153,7 @@ var chapters = [
     coords: [34.2186, 108.9594], zoom: 14, time: '2024年春',
     narrative: '<p>2024年春天，<span class="ch-highlight">林小月</span>在整理老宅时，发现了祖父林远舟的遗物——一本1963年的皮质相册。</p><p>相册第一页是西安大雁塔的黑白照片，背面一行褪色的钢笔字：<span class="ch-highlight">"沿着光的方向，一路向西。"</span>相册里夹着一张泛黄的手绘地图，红线从西安出发穿越河西走廊，直抵帕米尔高原。</p><p>小月翻遍了祖父的相册，发现了一个她不曾了解的人——<span class="ch-highlight">一个用镜头记录消逝时光的人</span>。她放下手头的工作，带着相册，踏上了这条六十年前的路。</p>',
     vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年9月12日</p><p>今天到了西安。大雁塔在晨光里站了一千三百年，<span class="ch-highlight">我在它面前不过是一粒尘埃</span>。我用父亲留下的禄来相机拍下了此行的第一张照片。我不知道这条路会把我带向哪里，但我有一种预感：<span class="ch-highlight">有些东西，不拍下来就会永远消失</span>。</p>',
+    storyCaption: '沿着光的方向，一路向西。',
     scene: { photo: 'dayanta.png', gradient: 'linear-gradient(160deg, #f4c088 0%, #d4955a 35%, #8b5a2e 65%, #3d1f0a 100%)', label: '西安大雁塔 · 小月旅程的起点', vintageLabel: '西安大雁塔 · 祖父1963年在此按下第一次快门' },
     vintagePhoto: 'olddayanta.png'
   },
@@ -151,6 +162,7 @@ var chapters = [
     coords: [36.0640, 103.8165], zoom: 14, time: '2024年春',
     narrative: '<p>循着祖父走过的路途，小月终于来到了兰州。</p><p>翻开祖父珍藏的老相册，旧时黄河两岸尽是往来的羊皮筏子，还有奔波河面的摆渡人，一张张黑白影像，映出他们在滔滔激流里撑篙前行的质朴身影。祖父写道：<span class="ch-highlight">他们渡的不是河，是千年的时光</span>。</p><p>小月静静伫立黄河岸边，抬手拍下眼前景致。曾经穿梭河面的羊皮筏子渐渐淡出岁月长河，<span class="ch-highlight">奔腾不息的黄河依旧如故，河畔光景未曾大变，只是世代依河而生的人，早已更迭了一辈又一辈。</span></p>',
     vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年9月20日</p><p>在兰州待了三天，每天都去黄河边。那些划羊皮筏子的摆渡人——<span class="ch-highlight">脸被河风和日头刻出了深深的纹路</span>。我拍了几十张他们的照片。不是为了好看，是因为我知道：<span class="ch-highlight">用不了多少年，这样的面孔就再也看不到了</span>。他们渡的不是河，是千年时光。</p>',
+    storyCaption: '他们渡的不是河，是千年时光。',
     scene: { photo: 'zhongshanqiao.png', gradient: 'linear-gradient(160deg, #a8c0d0 0%, #7a95a8 35%, #8b7355 65%, #4a3020 100%)', label: '兰州黄河铁桥 · 小月拍下黄河岸边的景致', vintageLabel: '兰州黄河铁桥 · 祖父镜头里的黄河摆渡人' },
     vintagePhoto: 'oldpeople.png'
   },
@@ -159,6 +171,7 @@ var chapters = [
     coords: [39.8012, 98.2165], zoom: 13, time: '2024年春',
     narrative: '<p>离开兰州继续向西，小月来到了嘉峪关——明长城的最西端。</p><p>祖父的相册里，嘉峪关的部分拍得最多。1963年的嘉峪关还没有被修缮：城楼的飞檐缺了角，夯土城墙被风沙啃得坑坑洼洼，关城脚下只有几户土坯房人家。<span class="ch-highlight">那是一种野生的、未经修饰的苍凉</span>——和眼前这个整修一新的关城判若两处。</p><p>小月举起相机。取景框里，同一座关城，同一个落日，但城墙根下早已空无一人。<span class="ch-highlight">六十年，足够让一座荒凉的边关重焕生机，也足够让一个人的足迹被风沙彻底抹去</span>——除非有人把它们拍下来。</p>',
     vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年10月5日</p><p>嘉峪关。长城到这里就算走到头了。关城破得厉害，但站在下面抬头看，还是觉得喘不过气来。<span class="ch-highlight">六百年前的明朝人在这片戈壁上修了这座城</span>，六百年后它还在。我拍了关城和脚下的戈壁。<span class="ch-highlight">这些东西大概撑不了多少年了</span>，但至少底片会记得。</p>',
+    storyCaption: '六十年，足够让一座荒凉的边关重焕生机。',
     scene: { photo: 'jiayuguan.png', gradient: 'linear-gradient(160deg, #c4a46a 0%, #8b7355 35%, #6b5535 60%, #3d2b1f 100%)', label: '嘉峪关 · 小月眼前整修一新的雄关', vintageLabel: '嘉峪关 · 祖父1963年拍下未经修饰的关城' },
     vintagePhoto: 'oldjiayuguan.png'
   },
@@ -167,6 +180,7 @@ var chapters = [
     coords: [40.0421, 94.8090], zoom: 14, time: '2024年春',
     narrative: '<p>相册中夹着一个密封的信封，邮戳是1963年10月，寄自敦煌。信封里是一封介绍信和一张工作证——<span class="ch-highlight">"敦煌文物研究所·摄影组·林远舟"</span>。</p><p>小月来到莫高窟，在研究院工作人员的帮助下，她终于知道祖父那三个月去了哪里——<span class="ch-highlight">1963年秋冬，祖父参与了莫高窟壁画的系统拍摄</span>。每一张底片都无比珍贵，他和同事们在昏暗的洞窟里工作了整整三个月，用镜头为后人留下了完整的壁画档案。</p><p>小月走进祖父曾经工作的地方，站在那些北魏壁画前，按下了快门。<span class="ch-highlight">六十年的时光在取景框中重叠。</span></p>',
     vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年10月15日</p><p>莫高窟。我已经在这里工作了快一个月。洞窟里的光线很暗，每次曝光都要等很久。但当我看到那些北魏壁画在底片上慢慢显影时，<span class="ch-highlight">我觉得一切都值得</span>。这些壁画已经撑了一千多年，<span class="ch-highlight">不能再让它们在我们这代人手里消失</span>。</p>',
+    storyCaption: '六十年的时光在取景框中重叠。',
     scene: { photo: 'mogaoku.png', gradient: 'linear-gradient(160deg, #c4956a 0%, #8b6914 40%, #5c3a1e 65%, #2a1008 100%)', label: '敦煌莫高窟 · 小月走进祖父工作过的地方', vintageLabel: '敦煌莫高窟 · 祖父在这里工作了整整三个月' },
     vintagePhoto: 'oldmogaoku.png'
   },
@@ -175,6 +189,7 @@ var chapters = [
     coords: [39.4677, 75.9898], zoom: 13, time: '2024年夏',
     narrative: '<p>历时一月，小月终于抵达祖父西行之路的终点——喀什。在这座两千年历史的古城里，她拍下清真寺前的晨光、老城巷子里嬉戏的孩童、大巴扎里熙熙攘攘的商贩。</p><p>她翻开祖父旧相册的最后一页，书页间夹着一只空白底片袋，上面写着两个字：<span class="ch-highlight">"给你。"</span></p><p>小月望着这二字，久久默然。她终于懂了——<span class="ch-highlight">祖父走过丝路，不为壮举，只想告诉后辈，世间诸多美好，都值得用心凝望、好好珍藏</span>。他留下空白底片，是将未完的旅途托付于她：<span class="ch-highlight">我已然定格完我们这一代人的丝路风华，往后山河，便交由你来记录。</span></p>',
     vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年11月8日</p><p>到了。帕米尔高原的脚下。我已经走了一整个秋天，身体很累了，<span class="ch-highlight">但我不想停下来</span>。我在相册最后一页放了一张空白底片。不知道将来谁会看到这本相册，但如果有人沿着这条路线走下去——<span class="ch-highlight">我希望他们知道，有些东西值得被看见，被记住</span>。路还很长，留给以后的人吧。</p>',
+    storyCaption: '我已然定格完我们这一代人的丝路风华，往后山河，便交由你来记录。',
     scene: { photo: 'qingzhensi.png', gradient: 'linear-gradient(160deg, #8bb8d0 0%, #6a98b0 30%, #5a4020 65%, #2a1a08 100%)', label: '喀什噶尔 · 丝绸之路中国段的终点，也是新的起点', vintageLabel: '喀什噶尔 · 祖父路线的最西端' },
     vintagePhoto: ''
   }
@@ -211,48 +226,121 @@ chapters.forEach(function(ch, i) {
 
 // ===== STATE =====
 var currentChapter = 0;
-var currentLayer = 'modern';
-var isAutoPlaying = false;
-var autoPlayTimer = null;
 var panelVisible = true;
-var currentPerspective = 'modern';
 
-// ===== RENDER =====
+// ===== MODE & RENDER =====
 var chapterScroll = document.getElementById('chapter-scroll');
+var currentMode = 'story';
+var currentCharacter = 'xiaoyue';
 
-function renderChapters(perspective) {
-  currentPerspective = perspective || 'modern';
-  var isVintage = currentPerspective === 'vintage';
+function renderChapters() {
   var html = '';
   for (var i = 0; i < chapters.length; i++) {
     var ch = chapters[i];
-    var blockClass = 'chapter-block' + (isVintage ? ' vintage-chapter' : '');
-    var titlePrefix = isVintage ? '【1963年】' : '';
-    var locationTime = isVintage ? '1963年秋' : ch.time;
-    var narrativeText = (isVintage && ch.vintageNarrative) ? ch.vintageNarrative : ch.narrative;
-
-    // Photo card
-    var cardHTML = '';
-    if (!(isVintage && ch.vintagePhoto === '')) {
-      var photoSrc = (isVintage && ch.vintagePhoto) ? ch.vintagePhoto : ch.scene.photo;
-      var needSepia = (isVintage && !ch.vintagePhoto);
-      var cardClass = 'scene-card' + (needSepia ? ' vintage-photo' : '');
-      var labelText = (isVintage && ch.scene.vintageLabel) ? ch.scene.vintageLabel : ch.scene.label;
-      cardHTML = '<div class="' + cardClass + '" style="background:' + ch.scene.gradient + ';"><img src="' + photoSrc + '" alt="' + labelText + '" loading="lazy" onerror="this.style.opacity=\'0\'"><div class="scene-label">' + labelText + '</div></div>';
+    if (currentMode === 'story') {
+      var cardHTML = '<div class="scene-card story-photo-' + i + '" style="background:' + ch.scene.gradient + ';"><img class="story-img" src="" alt="' + ch.scene.label + '" loading="lazy" onerror="this.style.opacity=\'0\'"><div class="scene-label">' + ch.scene.label + '</div></div>';
+      html += '<div class="chapter-block" data-index="' + i + '" onclick="goToChapter(' + i + ')"><div class="ch-num">' + ch.num + '</div><div class="ch-title">' + ch.title + '</div><div class="ch-location">' + ch.location + '  ·  ' + ch.time + '</div><div class="ch-text">' + ch.narrative + '</div>' + cardHTML + '</div>';
+    } else if (currentCharacter === 'xiaoyue') {
+      var cardHTML2 = '';
+      if (ch.scene.photo) {
+        cardHTML2 = '<div class="scene-card" style="background:' + ch.scene.gradient + ';"><img src="' + ch.scene.photo + '" alt="' + ch.scene.label + '" loading="lazy" onerror="this.style.opacity=\'0\'"><div class="scene-label">' + ch.scene.label + '</div></div>';
+      }
+      html += '<div class="chapter-block" data-index="' + i + '" onclick="goToChapter(' + i + ')"><div class="ch-num">' + ch.num + '</div><div class="ch-title">' + ch.title + '</div><div class="ch-location">' + ch.location + '  ·  ' + ch.time + '</div><div class="ch-text">' + ch.narrative + '</div>' + cardHTML2 + '</div>';
+    } else {
+      var cardHTML3 = '';
+      if (ch.vintagePhoto !== '') {
+        var vp = ch.vintagePhoto ? ch.vintagePhoto : ch.scene.photo;
+        var vpLabel = ch.scene.vintageLabel ? ch.scene.vintageLabel : ch.scene.label;
+        var needSepia = !ch.vintagePhoto;
+        var vpClass = 'scene-card' + (needSepia ? ' vintage-photo' : '');
+        cardHTML3 = '<div class="' + vpClass + '" style="background:' + ch.scene.gradient + ';"><img src="' + vp + '" alt="' + vpLabel + '" loading="lazy" onerror="this.style.opacity=\'0\'"><div class="scene-label">' + vpLabel + '</div></div>';
+      }
+      html += '<div class="chapter-block vintage-chapter" data-index="' + i + '" onclick="goToChapter(' + i + ')"><div class="ch-num">' + ch.num + '</div><div class="ch-title">【1963年】' + ch.title + '</div><div class="ch-location">' + ch.location + '  ·  1963年秋</div><div class="ch-text">' + ch.vintageNarrative + '</div>' + cardHTML3 + '</div>';
     }
-
-    html += '<div class="' + blockClass + '" data-index="' + i + '" onclick="goToChapter(' + i + ')"><div class="ch-num">' + ch.num + '</div><div class="ch-title">' + titlePrefix + ch.title + '</div><div class="ch-location">' + ch.location + '  ·  ' + locationTime + '</div><div class="ch-text">' + narrativeText + '</div>' + cardHTML + '</div>';
   }
   chapterScroll.innerHTML = html;
 }
-renderChapters('modern');
+
+function setVintageMode(on) {
+  if (on) {
+    mapContainer.classList.add('vintage-mode');
+    if (currentMode !== 'story') panelTagline.textContent = '祖父的笔记 · 1963年秋 —— 林远舟';
+  } else {
+    mapContainer.classList.remove('vintage-mode');
+    if (currentMode !== 'story') panelTagline.textContent = '一个年轻摄影师 · 一段跨越六十年的追寻';
+  }
+}
+
+renderChapters();
 
 // ===== NAVIGATION =====
+var storyTimer = null;
+
 function goToChapter(index) {
   if (index < 0 || index >= chapters.length) return;
+  var sameChapter = (index === currentChapter);
   currentChapter = index;
+  if (storyTimer) clearTimeout(storyTimer);
   updateUI();
+  if (currentMode === 'story' && !sameChapter) {
+    startStoryTransition(index);
+  }
 }
+
+function startStoryTransition(index) {
+  var ch = chapters[index];
+  setVintageMode(true);
+  updateMarkerTimes('vintage');
+  var bar = document.getElementById('caption-bar');
+  bar.innerHTML = '<div>「' + ch.storyCaption + '」</div><div style="font-size:11px;color:#8b7355;margin-top:6px;">— 点击地图继续 —</div>';
+  bar.classList.add('visible');
+  var photoCard = document.querySelector('.story-photo-' + index);
+  if (photoCard) {
+    var img = photoCard.querySelector('.story-img');
+    // Ch5: replace photo with text in vintage
+    if (index === 4 && !ch.vintagePhoto) {
+      photoCard.classList.add('vintage-photo');
+      photoCard.innerHTML = '<div class="ch5-vintage-text">我希望他们知道，<br>有些东西值得被看见，被记住。</div>';
+    } else {
+      photoCard.style.display = '';
+      var vp = ch.vintagePhoto ? ch.vintagePhoto : ch.scene.photo;
+      img.src = vp;
+      img.style.opacity = '1';
+      photoCard.classList.add('vintage-photo');
+      var labelEl = photoCard.querySelector('.scene-label');
+      if (labelEl && ch.scene.vintageLabel) labelEl.textContent = ch.scene.vintageLabel;
+    }
+  }
+}
+
+function finishStoryTransition() {
+  if (storyTimer) clearTimeout(storyTimer);
+  var index = currentChapter;
+  var ch = chapters[index];
+  setVintageMode(false);
+  updateMarkerTimes('modern');
+  var bar = document.getElementById('caption-bar');
+  bar.classList.remove('visible');
+  var photoCard = document.querySelector('.story-photo-' + index);
+  if (photoCard) {
+    photoCard.classList.remove('vintage-photo');
+    var labelEl = photoCard.querySelector('.scene-label');
+    if (index === 4 && !ch.vintagePhoto) {
+      photoCard.innerHTML = '<img class="story-img" src="' + ch.scene.photo + '" alt="' + ch.scene.label + '" loading="lazy" onerror="this.style.opacity=\'0\'" style="opacity:1"><div class="scene-label">' + ch.scene.label + '</div>';
+    } else {
+      var img = photoCard.querySelector('.story-img');
+      if (img) { img.src = ch.scene.photo; img.style.opacity = '1'; }
+      if (labelEl && ch.scene.label) labelEl.textContent = ch.scene.label;
+    }
+  }
+}
+
+// Click map to finish story transition
+document.getElementById('map').addEventListener('click', function(e) {
+  if (currentMode === 'story' && document.getElementById('caption-bar').classList.contains('visible')) {
+    finishStoryTransition();
+  }
+});
 
 function updateUI() {
   var ch = chapters[currentChapter];
@@ -280,7 +368,9 @@ function updateUI() {
 
   document.getElementById('btn-prev').disabled = currentChapter === 0;
   document.getElementById('btn-next').disabled = currentChapter === chapters.length - 1;
-  document.getElementById('btn-next').textContent = currentChapter === chapters.length - 1 ? '完成旅程 ✓' : '下一章 →';
+  var endText = '未完待续 …';
+  if (currentMode === 'character' && currentCharacter === 'yuanzhou') endText = '旅程结束';
+  document.getElementById('btn-next').textContent = currentChapter === chapters.length - 1 ? endText : '下一章 →';
   document.getElementById('chapter-indicator').textContent = (currentChapter + 1) + ' / ' + chapters.length;
 
   showLocationToast(ch.title);
@@ -311,10 +401,11 @@ document.getElementById('btn-next').addEventListener('click', function() {
   if (currentChapter < chapters.length - 1) {
     goToChapter(currentChapter + 1);
   } else {
-    stopAutoPlay();
     map.flyTo([39.5, 98], 5, { duration: 2.5 });
-    showLocationToast('旅程完成 · 故事才刚刚开始');
-    document.getElementById('chapter-indicator').textContent = '旅程完成';
+    var endToast = (currentMode === 'character' && currentCharacter === 'yuanzhou') ? '旅程结束 · 路还很长，留给以后的人吧' : '未完待续 · 故事才刚刚开始';
+    var endLabel = (currentMode === 'character' && currentCharacter === 'yuanzhou') ? '旅程结束' : '未完待续';
+    showLocationToast(endToast);
+    document.getElementById('chapter-indicator').textContent = endLabel;
     setTimeout(function() {
       document.getElementById('chapter-indicator').textContent = chapters.length + ' / ' + chapters.length;
     }, 3500);
@@ -350,61 +441,51 @@ document.getElementById('toggle-panel').addEventListener('click', function() {
   setTimeout(function() { map.invalidateSize(); }, 500);
 });
 
-// ===== LAYER SWITCHER =====
+// ===== MODE SWITCHER =====
 var mapContainer = document.getElementById('map-container');
 var panelTagline = document.querySelector('#panel-header .tagline');
-var layerButtons = document.querySelectorAll('#layer-switcher button');
-for (var l = 0; l < layerButtons.length; l++) {
-  layerButtons[l].addEventListener('click', function() {
-    var layer = this.dataset.layer;
-    if (layer === currentLayer) return;
-    currentLayer = layer;
+var modeButtons = document.querySelectorAll('#layer-switcher button[data-mode]');
+var characterDiv = document.getElementById('character-buttons');
+var characterButtons = document.querySelectorAll('#character-buttons button');
+
+for (var l = 0; l < modeButtons.length; l++) {
+  modeButtons[l].addEventListener('click', function() {
+    var mode = this.dataset.mode;
+    if (mode === currentMode) return;
+    currentMode = mode;
 
     var allBtns = document.querySelectorAll('#layer-switcher button');
     for (var b = 0; b < allBtns.length; b++) allBtns[b].classList.remove('active');
     this.classList.add('active');
 
-    if (layer === 'vintage') {
-      mapContainer.classList.add('vintage-mode');
-      panelTagline.textContent = '祖父的笔记 · 1963年秋 —— 林远舟';
+    if (mode === 'character') {
+      characterDiv.style.display = 'flex';
+      currentCharacter = 'xiaoyue';
+      characterButtons[0].classList.add('active');
+      characterButtons[1].classList.remove('active');
+      setVintageMode(false);
     } else {
-      mapContainer.classList.remove('vintage-mode');
-      panelTagline.textContent = '一个年轻摄影师 · 一段跨越六十年的追寻';
+      characterDiv.style.display = 'none';
+      setVintageMode(false);
     }
-    var saved = currentChapter;
-    renderChapters(layer);
-    currentChapter = saved;
-    updateMarkerTimes(layer);
-    updateUI();
+    renderChapters();
+    goToChapter(0);
   });
 }
 
-// ===== AUTOPLAY =====
-var autoplayBtn = document.getElementById('autoplay-btn');
-function startAutoPlay() {
-  isAutoPlaying = true;
-  autoplayBtn.textContent = '⏸';
-  autoplayBtn.classList.add('playing');
-  advanceAutoPlay();
+for (var c = 0; c < characterButtons.length; c++) {
+  characterButtons[c].addEventListener('click', function(e) {
+    e.stopPropagation();
+    var character = this.dataset.character;
+    if (character === currentCharacter) return;
+    currentCharacter = character;
+    characterButtons[0].classList.toggle('active', character === 'xiaoyue');
+    characterButtons[1].classList.toggle('active', character === 'yuanzhou');
+    setVintageMode(character === 'yuanzhou');
+    renderChapters();
+    goToChapter(0);
+  });
 }
-function stopAutoPlay() {
-  isAutoPlaying = false;
-  autoplayBtn.textContent = '▶';
-  autoplayBtn.classList.remove('playing');
-  if (autoPlayTimer) clearTimeout(autoPlayTimer);
-}
-function advanceAutoPlay() {
-  if (!isAutoPlaying) return;
-  if (currentChapter < chapters.length - 1) {
-    goToChapter(currentChapter + 1);
-    autoPlayTimer = setTimeout(advanceAutoPlay, 7000);
-  } else { stopAutoPlay(); }
-}
-autoplayBtn.addEventListener('click', function() {
-  if (isAutoPlaying) { stopAutoPlay(); }
-  else if (currentChapter === chapters.length - 1) { goToChapter(0); setTimeout(startAutoPlay, 2200); }
-  else { startAutoPlay(); }
-});
 
 // ===== INIT =====
 function init() {
@@ -412,6 +493,9 @@ function init() {
   progressRoute.setLatLngs([routeCoords[0]]);
   setTimeout(function() { document.getElementById('loading').classList.add('hidden'); }, 1400);
   window.addEventListener('resize', function() { map.invalidateSize(); });
+  if (currentMode === 'story') {
+    setTimeout(function() { startStoryTransition(0); }, 500);
+  }
 }
 init();
 </script>
