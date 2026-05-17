@@ -317,7 +317,7 @@ function finishStoryTransition() {
   if (storyTimer) clearTimeout(storyTimer);
   var index = currentChapter;
   var ch = chapters[index];
-  setVintageMode(false);
+  mapContainer.classList.remove('vintage-mode');
   updateMarkerTimes('modern');
   var bar = document.getElementById('caption-bar');
   bar.classList.remove('visible');
@@ -466,7 +466,8 @@ for (var l = 0; l < modeButtons.length; l++) {
       setVintageMode(false);
     } else {
       characterDiv.style.display = 'none';
-      setVintageMode(false);
+      mapContainer.classList.remove('vintage-mode');
+      panelTagline.textContent = '一个年轻摄影师 · 一段跨越六十年的追寻';
     }
     renderChapters();
     goToChapter(0);
