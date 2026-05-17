@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>丝路寻光 — 沿着祖父的镜头向西</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+:root {
+  --panel-bg: #1a1008;
+  --panel-bg-trans: rgba(26, 16, 8, 0.92);
+  --text: #e8dcc8;
+  --text-dim: #b8a890;
+  --accent: #d4a853;
+  --accent-bright: #f0c060;
+  --divider: rgba(180, 150, 110, 0.18);
+  --chapter-done: #8b7355;
+  --chapter-pending: #3a2a1a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+::selection { background: rgba(212, 168, 83, 0.35); color: #fff; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  height: 100vh; width: 100vw; overflow: hidden; display: flex;
+  background: #0d0a06; color: var(--text); -webkit-font-smoothing: antialiased;
+}
+#loading { position:fixed;inset:0;z-index:10000;background:#1a1008;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s,visibility 0.8s; }
+#loading.hidden { opacity:0;visibility:hidden;pointer-events:none; }
+#loading .ring { width:70px;height:70px;border:2px solid rgba(212,168,83,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1.2s linear infinite;margin-bottom:28px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+#loading .t { font-size:22px;letter-spacing:6px;color:var(--accent); }
+#loading .s { font-size:12px;color:var(--text-dim);margin-top:8px;letter-spacing:3px; }
+
+#story-panel { width:420px;min-width:420px;max-width:420px;height:100vh;background:var(--panel-bg);display:flex;flex-direction:column;z-index:100;box-shadow:4px 0 40px rgba(0,0,0,0.6);transition:width 0.45s,min-width 0.45s,max-width 0.45s,opacity 0.35s;position:relative; }
+#story-panel.collapsed { width:0;min-width:0;max-width:0;opacity:0;overflow:hidden; }
+#panel-header { padding:28px 28px 16px;border-bottom:1px solid var(--divider);flex-shrink:0;white-space:nowrap; }
+#panel-header h1 { font-size:24px;font-weight:700;letter-spacing:4px;color:var(--accent); }
+#panel-header .tagline { font-size:12px;color:var(--text-dim);margin-top:6px;letter-spacing:1px; }
+#chapter-progress { display:flex;gap:6px;padding:16px 28px;border-bottom:1px solid var(--divider);flex-shrink:0; }
+.progress-dot { flex:1;height:3px;border-radius:2px;background:var(--chapter-pending);transition:background 0.5s;cursor:pointer; }
+.progress-dot.done { background:var(--chapter-done); }
+.progress-dot.active { background:var(--accent);box-shadow:0 0 10px rgba(212,168,83,0.5); }
+#chapter-scroll { flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 28px;scroll-behavior:smooth; }
+#chapter-scroll::-webkit-scrollbar { width:4px; }
+#chapter-scroll::-webkit-scrollbar-thumb { background:#3a2a1a;border-radius:2px; }
+.chapter-block { margin-bottom:40px;opacity:0.4;transition:opacity 0.5s;cursor:pointer; }
+.chapter-block.active { opacity:1; }
+.chapter-block .ch-num { font-size:52px;font-weight:900;color:var(--accent);opacity:0.2;line-height:1;margin-bottom:-6px;transition:opacity 0.5s; }
+.chapter-block.active .ch-num { opacity:0.55; }
+.chapter-block .ch-title { font-size:18px;font-weight:700;letter-spacing:2px;margin-bottom:2px;color:var(--text); }
+.chapter-block .ch-location { font-size:12px;color:var(--accent);letter-spacing:3px;margin-bottom:14px; }
+.chapter-block .ch-text { font-size:14px;line-height:2;color:var(--text-dim);letter-spacing:0.4px; }
+.chapter-block .ch-highlight { color:var(--accent-bright); }
+.scene-card { margin-top:14px;border-radius:8px;overflow:hidden;position:relative;aspect-ratio:16/10;border:1px solid rgba(255,255,255,0.08); }
+.scene-card img { width:100%;height:100%;object-fit:cover;display:block;transition:opacity 0.3s; }
+.scene-card .scene-label { position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(transparent,rgba(0,0,0,0.75));font-size:11px;color:#ddd;letter-spacing:1px;z-index:1; }
+.vintage-chapter .ch-text,.vintage-chapter .ch-text p { font-style:italic;color:#c4956a !important; }
+.vintage-chapter .ch-text .ch-highlight { color:#e8c080 !important; }
+.vintage-note-head { color:#b8956a !important;letter-spacing:1px;font-style:normal; }
+.vintage-photo img { filter:sepia(0.8) brightness(0.75) contrast(1.1); }
+#panel-nav { padding:16px 28px 24px;border-top:1px solid var(--divider);display:flex;justify-content:space-between;align-items:center;flex-shrink:0; }
+.nav-btn { background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--text);padding:10px 20px;font-size:13px;letter-spacing:2px;cursor:pointer;border-radius:4px;transition:all 0.3s;font-family:inherit; }
+.nav-btn:hover { border-color:var(--accent);color:var(--accent); }
+.nav-btn:disabled { opacity:0.25;cursor:default;border-color:rgba(255,255,255,0.08); }
+.nav-btn:disabled:hover { color:var(--text); }
+#chapter-indicator { font-size:12px;color:var(--text-dim);letter-spacing:2px; }
+#map-container { flex:1;height:100vh;position:relative; }
+#map { width:100%;height:100%; }
+#map-container.vintage-mode .leaflet-tile-pane { filter:sepia(0.75) brightness(0.8) contrast(1.15) saturate(0.5); }
+#map-container.vintage-mode::after { content:'';position:absolute;inset:0;z-index:500;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(20,10,0,0.45) 100%); }
+#map-controls { position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:600; }
+#toggle-panel { position:absolute;top:20px;left:20px;z-index:600;width:38px;height:38px;background:var(--panel-bg-trans);border:1px solid rgba(255,255,255,0.12);border-radius:8px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.3s;backdrop-filter:blur(10px);font-size:16px; }
+#toggle-panel:hover { border-color:var(--accent);color:var(--accent); }
+#layer-switcher { background:var(--panel-bg-trans);border-radius:10px;padding:6px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:2px; }
+#layer-switcher button { display:flex;align-items:center;gap:8px;background:transparent;border:none;color:var(--text-dim);padding:10px 14px;font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:6px;text-align:left;font-family:inherit;transition:all 0.2s;white-space:nowrap; }
+#layer-switcher button:hover { color:var(--text);background:rgba(255,255,255,0.04); }
+#layer-switcher button.active { color:var(--accent);background:rgba(212,168,83,0.1); }
+#autoplay-btn { width:38px;height:38px;background:var(--panel-bg-trans);border:1px solid rgba(255,255,255,0.12);border-radius:8px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.3s;backdrop-filter:blur(10px);align-self:flex-end; }
+#autoplay-btn:hover { border-color:var(--accent); }
+#autoplay-btn.playing { color:var(--accent);border-color:var(--accent);animation:btnPulse 2s infinite; }
+@keyframes btnPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(212,168,83,0.3); } 50%{ box-shadow:0 0 0 8px rgba(212,168,83,0); } }
+#location-toast { position:absolute;top:90px;left:50%;transform:translateX(-50%);background:var(--panel-bg-trans);color:var(--accent);padding:8px 22px;border-radius:20px;font-size:14px;letter-spacing:2px;pointer-events:none;z-index:550;backdrop-filter:blur(10px);border:1px solid rgba(212,168,83,0.25);opacity:0;transition:opacity 0.4s;white-space:nowrap; }
+#location-toast.visible { opacity:1; }
+@media (max-width:768px) {
+  body { flex-direction:column; }
+  #story-panel { width:100%;min-width:100%;max-width:100%;height:44vh;order:2; }
+  #story-panel.collapsed { width:100%;min-width:100%;max-width:100%;height:0;opacity:0; }
+  #map-container { height:56vh;flex:none; }
+  #panel-header { padding:14px 20px 8px; }
+  #panel-header h1 { font-size:18px; }
+  #chapter-scroll { padding:12px 20px; }
+  #panel-nav { padding:10px 20px 14px; }
+  .chapter-block { margin-bottom:24px; }
+  .chapter-block .ch-num { font-size:36px; }
+}
+</style>
+</head>
+<body>
+<div id="loading"><div class="ring"></div><div class="t">丝 路 寻 光</div><div class="s">CHASING LIGHT ON THE SILK ROAD</div></div>
+
+<div id="story-panel">
+  <div id="panel-header"><h1>丝路寻光</h1><div class="tagline">一个年轻摄影师 · 一段跨越六十年的追寻</div></div>
+  <div id="chapter-progress">
+    <div class="progress-dot active" data-ch="1"></div>
+    <div class="progress-dot" data-ch="2"></div>
+    <div class="progress-dot" data-ch="3"></div>
+    <div class="progress-dot" data-ch="4"></div>
+    <div class="progress-dot" data-ch="5"></div>
+  </div>
+  <div id="chapter-scroll"></div>
+  <div id="panel-nav">
+    <button class="nav-btn" id="btn-prev" disabled>← 上一章</button>
+    <span id="chapter-indicator">1 / 5</span>
+    <button class="nav-btn" id="btn-next">下一章 →</button>
+  </div>
+</div>
+
+<div id="map-container">
+  <div id="map"></div>
+  <button id="toggle-panel" title="隐藏/显示故事面板">◀</button>
+  <div id="location-toast"></div>
+  <div id="map-controls">
+    <div id="layer-switcher">
+      <button data-layer="modern" class="active"><span>🗺</span> 现代视角</button>
+      <button data-layer="vintage"><span>📷</span> 怀旧光影</button>
+    </div>
+    <button id="autoplay-btn" title="自动播放">▶</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Error handler
+window.onerror = function(msg, url, line) {
+  var el = document.getElementById('loading');
+  if (el) el.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:20px;font-family:sans-serif;">Error line ' + line + ':<br>' + msg + '</div>';
+};
+
+// ===== CHAPTER DATA =====
+var chapters = [
+  {
+    id: 1, num: '壹', title: '西安 · 启程', location: '陕西省西安市',
+    coords: [34.2186, 108.9594], zoom: 14, time: '2024年春',
+    narrative: '<p>2024年春天，<span class="ch-highlight">林小月</span>在整理老宅时，发现了祖父林远舟的遗物——一本1963年的皮质相册。</p><p>相册第一页是西安大雁塔的黑白照片，背面一行褪色的钢笔字：<span class="ch-highlight">"沿着光的方向，一路向西。"</span>相册里夹着一张泛黄的手绘地图，红线从西安出发穿越河西走廊，直抵帕米尔高原。</p><p>小月翻遍了祖父的相册，发现了一个她不曾了解的人——<span class="ch-highlight">一个用镜头记录消逝时光的人</span>。她放下手头的工作，带着相册，踏上了这条六十年前的路。</p>',
+    vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年9月12日</p><p>今天到了西安。大雁塔在晨光里站了一千三百年，<span class="ch-highlight">我在它面前不过是一粒尘埃</span>。我用父亲留下的禄来相机拍下了此行的第一张照片。我不知道这条路会把我带向哪里，但我有一种预感：<span class="ch-highlight">有些东西，不拍下来就会永远消失</span>。</p>',
+    scene: { photo: 'dayanta.png', gradient: 'linear-gradient(160deg, #f4c088 0%, #d4955a 35%, #8b5a2e 65%, #3d1f0a 100%)', label: '西安大雁塔 · 小月旅程的起点', vintageLabel: '西安大雁塔 · 祖父1963年在此按下第一次快门' },
+    vintagePhoto: 'olddayanta.png'
+  },
+  {
+    id: 2, num: '贰', title: '兰州 · 铁桥', location: '甘肃省兰州市',
+    coords: [36.0640, 103.8165], zoom: 14, time: '2024年春',
+    narrative: '<p>循着祖父走过的路途，小月终于来到了兰州。</p><p>翻开祖父珍藏的老相册，旧时黄河两岸尽是往来的羊皮筏子，还有奔波河面的摆渡人，一张张黑白影像，映出他们在滔滔激流里撑篙前行的质朴身影。祖父写道：<span class="ch-highlight">他们渡的不是河，是千年的时光</span>。</p><p>小月静静伫立黄河岸边，抬手拍下眼前景致。曾经穿梭河面的羊皮筏子渐渐淡出岁月长河，<span class="ch-highlight">奔腾不息的黄河依旧如故，河畔光景未曾大变，只是世代依河而生的人，早已更迭了一辈又一辈。</span></p>',
+    vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年9月20日</p><p>在兰州待了三天，每天都去黄河边。那些划羊皮筏子的摆渡人——<span class="ch-highlight">脸被河风和日头刻出了深深的纹路</span>。我拍了几十张他们的照片。不是为了好看，是因为我知道：<span class="ch-highlight">用不了多少年，这样的面孔就再也看不到了</span>。他们渡的不是河，是千年时光。</p>',
+    scene: { photo: 'zhongshanqiao.png', gradient: 'linear-gradient(160deg, #a8c0d0 0%, #7a95a8 35%, #8b7355 65%, #4a3020 100%)', label: '兰州黄河铁桥 · 小月拍下黄河岸边的景致', vintageLabel: '兰州黄河铁桥 · 祖父镜头里的黄河摆渡人' },
+    vintagePhoto: 'oldpeople.png'
+  },
+  {
+    id: 3, num: '叁', title: '嘉峪关 · 雄关', location: '甘肃省嘉峪关市',
+    coords: [39.8012, 98.2165], zoom: 13, time: '2024年春',
+    narrative: '<p>离开兰州继续向西，小月来到了嘉峪关——明长城的最西端。</p><p>祖父的相册里，嘉峪关的部分拍得最多。1963年的嘉峪关还没有被修缮：城楼的飞檐缺了角，夯土城墙被风沙啃得坑坑洼洼，关城脚下只有几户土坯房人家。<span class="ch-highlight">那是一种野生的、未经修饰的苍凉</span>——和眼前这个整修一新的关城判若两处。</p><p>小月举起相机。取景框里，同一座关城，同一个落日，但城墙根下早已空无一人。<span class="ch-highlight">六十年，足够让一座荒凉的边关重焕生机，也足够让一个人的足迹被风沙彻底抹去</span>——除非有人把它们拍下来。</p>',
+    vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年10月5日</p><p>嘉峪关。长城到这里就算走到头了。关城破得厉害，但站在下面抬头看，还是觉得喘不过气来。<span class="ch-highlight">六百年前的明朝人在这片戈壁上修了这座城</span>，六百年后它还在。我拍了关城和脚下的戈壁。<span class="ch-highlight">这些东西大概撑不了多少年了</span>，但至少底片会记得。</p>',
+    scene: { photo: 'jiayuguan.png', gradient: 'linear-gradient(160deg, #c4a46a 0%, #8b7355 35%, #6b5535 60%, #3d2b1f 100%)', label: '嘉峪关 · 小月眼前整修一新的雄关', vintageLabel: '嘉峪关 · 祖父1963年拍下未经修饰的关城' },
+    vintagePhoto: 'oldjiayuguan.png'
+  },
+  {
+    id: 4, num: '肆', title: '敦煌 · 莫高窟', location: '甘肃省敦煌市',
+    coords: [40.0421, 94.8090], zoom: 14, time: '2024年春',
+    narrative: '<p>相册中夹着一个密封的信封，邮戳是1963年10月，寄自敦煌。信封里是一封介绍信和一张工作证——<span class="ch-highlight">"敦煌文物研究所·摄影组·林远舟"</span>。</p><p>小月来到莫高窟，在研究院工作人员的帮助下，她终于知道祖父那三个月去了哪里——<span class="ch-highlight">1963年秋冬，祖父参与了莫高窟壁画的系统拍摄</span>。每一张底片都无比珍贵，他和同事们在昏暗的洞窟里工作了整整三个月，用镜头为后人留下了完整的壁画档案。</p><p>小月走进祖父曾经工作的地方，站在那些北魏壁画前，按下了快门。<span class="ch-highlight">六十年的时光在取景框中重叠。</span></p>',
+    vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年10月15日</p><p>莫高窟。我已经在这里工作了快一个月。洞窟里的光线很暗，每次曝光都要等很久。但当我看到那些北魏壁画在底片上慢慢显影时，<span class="ch-highlight">我觉得一切都值得</span>。这些壁画已经撑了一千多年，<span class="ch-highlight">不能再让它们在我们这代人手里消失</span>。</p>',
+    scene: { photo: 'mogaoku.png', gradient: 'linear-gradient(160deg, #c4956a 0%, #8b6914 40%, #5c3a1e 65%, #2a1008 100%)', label: '敦煌莫高窟 · 小月走进祖父工作过的地方', vintageLabel: '敦煌莫高窟 · 祖父在这里工作了整整三个月' },
+    vintagePhoto: 'oldmogaoku.png'
+  },
+  {
+    id: 5, num: '伍', title: '喀什 · 归途', location: '新疆维吾尔自治区喀什市',
+    coords: [39.4677, 75.9898], zoom: 13, time: '2024年夏',
+    narrative: '<p>历时一月，小月终于抵达祖父西行之路的终点——喀什。在这座两千年历史的古城里，她拍下清真寺前的晨光、老城巷子里嬉戏的孩童、大巴扎里熙熙攘攘的商贩。</p><p>她翻开祖父旧相册的最后一页，书页间夹着一只空白底片袋，上面写着两个字：<span class="ch-highlight">"给你。"</span></p><p>小月望着这二字，久久默然。她终于懂了——<span class="ch-highlight">祖父走过丝路，不为壮举，只想告诉后辈，世间诸多美好，都值得用心凝望、好好珍藏</span>。他留下空白底片，是将未完的旅途托付于她：<span class="ch-highlight">我已然定格完我们这一代人的丝路风华，往后山河，便交由你来记录。</span></p>',
+    vintageNarrative: '<p class="vintage-note-head">——祖父林远舟的笔记 · 1963年11月8日</p><p>到了。帕米尔高原的脚下。我已经走了一整个秋天，身体很累了，<span class="ch-highlight">但我不想停下来</span>。我在相册最后一页放了一张空白底片。不知道将来谁会看到这本相册，但如果有人沿着这条路线走下去——<span class="ch-highlight">我希望他们知道，有些东西值得被看见，被记住</span>。路还很长，留给以后的人吧。</p>',
+    scene: { photo: 'qingzhensi.png', gradient: 'linear-gradient(160deg, #8bb8d0 0%, #6a98b0 30%, #5a4020 65%, #2a1a08 100%)', label: '喀什噶尔 · 丝绸之路中国段的终点，也是新的起点', vintageLabel: '喀什噶尔 · 祖父路线的最西端' },
+    vintagePhoto: ''
+  }
+];
+
+// ===== MAP SETUP =====
+var map = L.map('map', { center: [39.5, 98], zoom: 5, zoomControl: false, attributionControl: false });
+L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', { subdomains: '1234', maxZoom: 18 }).addTo(map);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// ===== MARKERS & ROUTE =====
+function createIcon(num, isActive) {
+  var size = isActive ? 46 : 34;
+  var bg = isActive ? '#d4a853' : '#6b5b45';
+  var border = isActive ? '#f0c060' : '#5a4a35';
+  return L.divIcon({
+    className: 'custom-marker',
+    html: '<div style="width:' + size + 'px;height:' + size + 'px;background:' + bg + ';border:3px solid ' + border + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:' + (isActive ? 15 : 11) + 'px;font-weight:900;color:#1a1008;box-shadow:0 3px 14px rgba(0,0,0,0.5);transition:all 0.4s;cursor:pointer;">' + num + '</div>',
+    iconSize: [size, size], iconAnchor: [size / 2, size / 2]
+  });
+}
+
+var routeCoords = chapters.map(function(ch) { return ch.coords; });
+L.polyline(routeCoords, { color: '#8b7355', weight: 2.5, opacity: 0.4, dashArray: '8, 10', lineCap: 'round' }).addTo(map);
+var progressRoute = L.polyline([], { color: '#d4a853', weight: 3.5, opacity: 0.9, lineCap: 'round' }).addTo(map);
+
+var markers = [];
+chapters.forEach(function(ch, i) {
+  var marker = L.marker(ch.coords, { icon: createIcon(i + 1, false) }).addTo(map);
+  marker.bindPopup('<div style="font-family:PingFang SC,Microsoft YaHei,sans-serif;min-width:180px;padding:2px 0;"><div style="font-size:10px;letter-spacing:2px;color:#8b7355;margin-bottom:4px;">第' + (i + 1) + '章</div><div style="font-size:16px;font-weight:700;color:#1a1008;margin-bottom:4px;">' + ch.title + '</div><div style="font-size:11px;color:#666;">' + ch.location + '</div><div style="font-size:10px;color:#999;margin-top:2px;">' + ch.time + '</div></div>');
+  marker.on('click', function() { goToChapter(i); });
+  markers.push(marker);
+});
+
+// ===== STATE =====
+var currentChapter = 0;
+var currentLayer = 'modern';
+var isAutoPlaying = false;
+var autoPlayTimer = null;
+var panelVisible = true;
+var currentPerspective = 'modern';
+
+// ===== RENDER =====
+var chapterScroll = document.getElementById('chapter-scroll');
+
+function renderChapters(perspective) {
+  currentPerspective = perspective || 'modern';
+  var isVintage = currentPerspective === 'vintage';
+  var html = '';
+  for (var i = 0; i < chapters.length; i++) {
+    var ch = chapters[i];
+    var blockClass = 'chapter-block' + (isVintage ? ' vintage-chapter' : '');
+    var titlePrefix = isVintage ? '【1963年】' : '';
+    var locationTime = isVintage ? '1963年秋' : ch.time;
+    var narrativeText = (isVintage && ch.vintageNarrative) ? ch.vintageNarrative : ch.narrative;
+
+    // Photo card
+    var cardHTML = '';
+    if (!(isVintage && ch.vintagePhoto === '')) {
+      var photoSrc = (isVintage && ch.vintagePhoto) ? ch.vintagePhoto : ch.scene.photo;
+      var needSepia = (isVintage && !ch.vintagePhoto);
+      var cardClass = 'scene-card' + (needSepia ? ' vintage-photo' : '');
+      var labelText = (isVintage && ch.scene.vintageLabel) ? ch.scene.vintageLabel : ch.scene.label;
+      cardHTML = '<div class="' + cardClass + '" style="background:' + ch.scene.gradient + ';"><img src="' + photoSrc + '" alt="' + labelText + '" loading="lazy" onerror="this.style.opacity=\'0\'"><div class="scene-label">' + labelText + '</div></div>';
+    }
+
+    html += '<div class="' + blockClass + '" data-index="' + i + '" onclick="goToChapter(' + i + ')"><div class="ch-num">' + ch.num + '</div><div class="ch-title">' + titlePrefix + ch.title + '</div><div class="ch-location">' + ch.location + '  ·  ' + locationTime + '</div><div class="ch-text">' + narrativeText + '</div>' + cardHTML + '</div>';
+  }
+  chapterScroll.innerHTML = html;
+}
+renderChapters('modern');
+
+// ===== NAVIGATION =====
+function goToChapter(index) {
+  if (index < 0 || index >= chapters.length) return;
+  currentChapter = index;
+  updateUI();
+}
+
+function updateUI() {
+  var ch = chapters[currentChapter];
+  map.flyTo(ch.coords, ch.zoom, { duration: 2.0, easeLinearity: 0.2 });
+  markers.forEach(function(m, idx) {
+    m.setIcon(createIcon(idx + 1, idx === currentChapter));
+    if (idx === currentChapter) setTimeout(function() { m.openPopup(); }, 600);
+  });
+  progressRoute.setLatLngs(routeCoords.slice(0, currentChapter + 1));
+
+  var blocks = document.querySelectorAll('.chapter-block');
+  for (var i = 0; i < blocks.length; i++) {
+    blocks[i].classList.toggle('active', i === currentChapter);
+  }
+
+  var activeBlock = document.querySelector('.chapter-block[data-index="' + currentChapter + '"]');
+  if (activeBlock) activeBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  var dots = document.querySelectorAll('.progress-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].classList.remove('active', 'done');
+    if (j < currentChapter) dots[j].classList.add('done');
+    if (j === currentChapter) dots[j].classList.add('active');
+  }
+
+  document.getElementById('btn-prev').disabled = currentChapter === 0;
+  document.getElementById('btn-next').disabled = currentChapter === chapters.length - 1;
+  document.getElementById('btn-next').textContent = currentChapter === chapters.length - 1 ? '完成旅程 ✓' : '下一章 →';
+  document.getElementById('chapter-indicator').textContent = (currentChapter + 1) + ' / ' + chapters.length;
+
+  showLocationToast(ch.title);
+}
+
+function updateMarkerTimes(layer) {
+  for (var m = 0; m < markers.length; m++) {
+    var ch = chapters[m];
+    var timeText = layer === 'vintage' ? '1963年秋' : ch.time;
+    var newContent = '<div style="font-family:PingFang SC,Microsoft YaHei,sans-serif;min-width:180px;padding:2px 0;"><div style="font-size:10px;letter-spacing:2px;color:#8b7355;margin-bottom:4px;">第' + (m + 1) + '章</div><div style="font-size:16px;font-weight:700;color:#1a1008;margin-bottom:4px;">' + ch.title + '</div><div style="font-size:11px;color:#666;">' + ch.location + '</div><div style="font-size:10px;color:#999;margin-top:2px;">' + timeText + '</div></div>';
+    markers[m].unbindPopup();
+    markers[m].bindPopup(newContent);
+  }
+}
+
+function showLocationToast(text) {
+  var toast = document.getElementById('location-toast');
+  toast.textContent = text;
+  toast.classList.add('visible');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(function() { toast.classList.remove('visible'); }, 3000);
+}
+
+document.getElementById('btn-prev').addEventListener('click', function() {
+  if (currentChapter > 0) goToChapter(currentChapter - 1);
+});
+document.getElementById('btn-next').addEventListener('click', function() {
+  if (currentChapter < chapters.length - 1) {
+    goToChapter(currentChapter + 1);
+  } else {
+    stopAutoPlay();
+    map.flyTo([39.5, 98], 5, { duration: 2.5 });
+    showLocationToast('旅程完成 · 故事才刚刚开始');
+    document.getElementById('chapter-indicator').textContent = '旅程完成';
+    setTimeout(function() {
+      document.getElementById('chapter-indicator').textContent = chapters.length + ' / ' + chapters.length;
+    }, 3500);
+  }
+});
+
+var progressDots = document.querySelectorAll('.progress-dot');
+for (var k = 0; k < progressDots.length; k++) {
+  (function(idx) {
+    progressDots[idx].addEventListener('click', function(e) {
+      goToChapter(parseInt(e.target.dataset.ch) - 1);
+    });
+  })(k);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (currentChapter < chapters.length - 1) goToChapter(currentChapter + 1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (currentChapter > 0) goToChapter(currentChapter - 1);
+  }
+});
+
+// ===== PANEL TOGGLE =====
+document.getElementById('toggle-panel').addEventListener('click', function() {
+  panelVisible = !panelVisible;
+  var panel = document.getElementById('story-panel');
+  panel.classList.toggle('collapsed', !panelVisible);
+  this.textContent = panelVisible ? '◀' : '▶';
+  this.title = panelVisible ? '隐藏故事面板' : '显示故事面板';
+  setTimeout(function() { map.invalidateSize(); }, 500);
+});
+
+// ===== LAYER SWITCHER =====
+var mapContainer = document.getElementById('map-container');
+var panelTagline = document.querySelector('#panel-header .tagline');
+var layerButtons = document.querySelectorAll('#layer-switcher button');
+for (var l = 0; l < layerButtons.length; l++) {
+  layerButtons[l].addEventListener('click', function() {
+    var layer = this.dataset.layer;
+    if (layer === currentLayer) return;
+    currentLayer = layer;
+
+    var allBtns = document.querySelectorAll('#layer-switcher button');
+    for (var b = 0; b < allBtns.length; b++) allBtns[b].classList.remove('active');
+    this.classList.add('active');
+
+    if (layer === 'vintage') {
+      mapContainer.classList.add('vintage-mode');
+      panelTagline.textContent = '祖父的笔记 · 1963年秋 —— 林远舟';
+    } else {
+      mapContainer.classList.remove('vintage-mode');
+      panelTagline.textContent = '一个年轻摄影师 · 一段跨越六十年的追寻';
+    }
+    var saved = currentChapter;
+    renderChapters(layer);
+    currentChapter = saved;
+    updateMarkerTimes(layer);
+    updateUI();
+  });
+}
+
+// ===== AUTOPLAY =====
+var autoplayBtn = document.getElementById('autoplay-btn');
+function startAutoPlay() {
+  isAutoPlaying = true;
+  autoplayBtn.textContent = '⏸';
+  autoplayBtn.classList.add('playing');
+  advanceAutoPlay();
+}
+function stopAutoPlay() {
+  isAutoPlaying = false;
+  autoplayBtn.textContent = '▶';
+  autoplayBtn.classList.remove('playing');
+  if (autoPlayTimer) clearTimeout(autoPlayTimer);
+}
+function advanceAutoPlay() {
+  if (!isAutoPlaying) return;
+  if (currentChapter < chapters.length - 1) {
+    goToChapter(currentChapter + 1);
+    autoPlayTimer = setTimeout(advanceAutoPlay, 7000);
+  } else { stopAutoPlay(); }
+}
+autoplayBtn.addEventListener('click', function() {
+  if (isAutoPlaying) { stopAutoPlay(); }
+  else if (currentChapter === chapters.length - 1) { goToChapter(0); setTimeout(startAutoPlay, 2200); }
+  else { startAutoPlay(); }
+});
+
+// ===== INIT =====
+function init() {
+  updateUI();
+  progressRoute.setLatLngs([routeCoords[0]]);
+  setTimeout(function() { document.getElementById('loading').classList.add('hidden'); }, 1400);
+  window.addEventListener('resize', function() { map.invalidateSize(); });
+}
+init();
+</script>
+</body>
+</html>
